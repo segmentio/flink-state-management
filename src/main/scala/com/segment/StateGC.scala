@@ -1,6 +1,6 @@
 package com.segment
 
-import com.segment.message.Sensor
+import com.segment.message.{Sensor, SensorReadingKey}
 import org.apache.flink.api.common.functions.FilterFunction
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeHint, TypeInformation}
 import org.apache.flink.api.java.functions.KeySelector
@@ -9,6 +9,7 @@ import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.state.api.{OperatorTransformation, Savepoint}
 import java.util.UUID.randomUUID
+
 import org.slf4j.LoggerFactory
 
 /**************************************************************
@@ -64,8 +65,8 @@ object StateGC {
 
     val transformAveragerState = OperatorTransformation
       .bootstrapWith(averagerKeyedState)
-      .keyBy(new KeySelector[KeyedState, String] {
-        override def getKey(state: KeyedState): String = state.key
+      .keyBy(new KeySelector[KeyedState, SensorReadingKey] {
+        override def getKey(state: KeyedState): SensorReadingKey = state.key
       })
       .transform(new ReadingAveragerBootstrapFunction)
 

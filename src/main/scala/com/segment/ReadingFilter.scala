@@ -44,7 +44,7 @@ class ReadingFilter extends BroadcastProcessFunction[RawSensorReading, Sensor, R
     out: Collector[RawSensorReading]): Unit = {
 
     val sensors = ctx.getBroadcastState(ReadingFilter.sensorDesc)
-    val sensor = sensors.get(reading.id)
+    val sensor = sensors.get(reading.key.id)
 
     if (sensor != null && sensor.enabled) {
       out.collect(reading)

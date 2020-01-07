@@ -6,5 +6,6 @@ package com.segment.message
 //  "value": 22.5
 //}
 
-case class RawSensorReading(id: String, timestamp: Long, value: Double)
-case class SensorReading(id: String, timestamp: Long, value: Double, unit: String, name: String)
+case class SensorReadingKey(id: String, system: String)
+case class RawSensorReading(key: SensorReadingKey, timestamp: Long, value: Double)
+case class SensorReading(key: SensorReadingKey, timestamp: Long, value: Double, unit: String, name: String)

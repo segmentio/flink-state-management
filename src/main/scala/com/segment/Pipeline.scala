@@ -95,7 +95,7 @@ object Pipeline {
       .uid(ReadingFilter.uid)
 
     val readingAvg = readingFilter
-      .keyBy(_.id)
+      .keyBy(_.key)
       .connect(parsedSensorDetails.broadcast(ReadingAverager.broadcastStates: _*))
       .process(new ReadingAverager)
       .name(ReadingAverager.name)

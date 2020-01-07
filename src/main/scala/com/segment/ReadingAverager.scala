@@ -1,6 +1,6 @@
 package com.segment
 
-import com.segment.message.{RawSensorReading, Sensor, SensorReading}
+import com.segment.message.{RawSensorReading, Sensor, SensorReading, SensorReadingKey}
 import org.apache.flink.api.common.state.{MapStateDescriptor, ValueState, ValueStateDescriptor}
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeHint, TypeInformation}
 import org.apache.flink.configuration.Configuration
@@ -39,11 +39,11 @@ class ReadingAverager extends KeyedBroadcastProcessFunction[String, RawSensorRea
     out: Collector[SensorReading]): Unit = {
 
     val sensorMap = ctx.getBroadcastState(ReadingAverager.sensorMap)
-    if (!sensorMap.contains(reading.id)) {
+    if (!sensorMap.contains(reading.key.id)) {
       return
     }
 
-    val sensor = sensorMap.get(reading.id)
+    val sensor = sensorMap.get(reading.key.id)
     val value = getRuntimeContext.getState(ReadingAverager.stateDesc)
 
     if (value.value() == null) {
@@ -53,16 +53,16 @@ class ReadingAverager extends KeyedBroadcastProcessFunction[String, RawSensorRea
     }
 
     // emit a SensorReading with the average temperature
-    out.collect(SensorReading(sensor.id, reading.timestamp, value.value(), sensor.unit, sensor.name))
+    out.collect(SensorReading(reading.key, reading.timestamp, value.value(), sensor.unit, sensor.name))
   }
 }
 
 /**************************************************************
  * For retrieving state from the savepoint
  **************************************************************/
-case class KeyedState(key: String, value: Double)
+case class KeyedState(key: SensorReadingKey, value: Double)
 
-class ReadingAveragerStateFunction extends KeyedStateReaderFunction[String, KeyedState] {
+class ReadingAveragerStateFunction extends KeyedStateReaderFunction[SensorReadingKey, KeyedState] {
    var state: ValueState[java.lang.Double] = _
 
   override def open(parameters: Configuration) {
@@ -70,11 +70,11 @@ class ReadingAveragerStateFunction extends KeyedStateReaderFunction[String, Keye
   }
 
   override def readKey(
-     key: String,
+     key: SensorReadingKey,
      ctx: Context,
      out: Collector[KeyedState]) : Unit = {
 
-    if (SensorService.sensorEnabled(key)) {
+    if (SensorService.sensorEnabled(key.id)) {
       out.collect(KeyedState(key, state.value()));
     }
   }
@@ -83,14 +83,14 @@ class ReadingAveragerStateFunction extends KeyedStateReaderFunction[String, Keye
 /**************************************************************
  * For hydrating the state that the Operator will use after loading from savepoint
  **************************************************************/
-class ReadingAveragerBootstrapFunction extends KeyedStateBootstrapFunction[String, KeyedState] {
+class ReadingAveragerBootstrapFunction extends KeyedStateBootstrapFunction[SensorReadingKey, KeyedState] {
   var state: ValueState[java.lang.Double] = _
 
   override def open(parameters: Configuration) {
     state = getRuntimeContext.getState(ReadingAverager.stateDesc)
   }
 
-  override def processElement(reading: KeyedState, ctx: KeyedStateBootstrapFunction[String, KeyedState]#Context): Unit = {
+  override def processElement(reading: KeyedState, ctx: KeyedStateBootstrapFunction[SensorReadingKey, KeyedState]#Context): Unit = {
     state.update(reading.value)
   }
 }
