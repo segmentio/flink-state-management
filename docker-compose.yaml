@@ -1,0 +1,38 @@
+version: "2.1"
+services:
+  jobmanager:
+    image: ${FLINK_DOCKER_IMAGE_NAME:-flink:1.9.0-scala_2.11}
+    expose:
+      - "6123"
+    ports:
+      - "8081:8081"
+    command: jobmanager
+    volumes:
+      - state-store:/state
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+
+  taskmanager:
+    image: ${FLINK_DOCKER_IMAGE_NAME:-flink:1.9.0-scala_2.11}
+    expose:
+      - "6121"
+      - "6122"
+    depends_on:
+      - jobmanager
+    volumes:
+      - state-store:/state
+    command: taskmanager
+    links:
+      - "jobmanager:jobmanager"
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+
+  rabbitmq:
+    image: rabbitmq:3.8.0-rc.1-management-alpine
+    ports:
+      - "8090:15672"
+      - "5672:5672"
+
+volumes:
+  state-store:
+    driver: local
