@@ -88,6 +88,11 @@ object StateGC {
   def isValidParams(params: ParameterTool): Boolean = {
     var validParams = true
 
+    if (params.get("checkpoint-dir", "") == "") {
+      LOG.error("Missing required param: checkpoint-dir")
+      validParams = false
+    }
+
     if (params.get("savepoint-dir", "") == "") {
       LOG.error("Missing required param: savepoint-dir")
       validParams = false
@@ -101,7 +106,8 @@ object StateGC {
     if (!validParams) {
       LOG.error("""
       Usage:
-        savepoint-path: directory to load and store savepoints
+        checkpoint-dir: directory to store checkpoints in
+        savepoint-dir: directory to load and store savepoints
         savepoint-id: savepoint ID to load""")
     }
 

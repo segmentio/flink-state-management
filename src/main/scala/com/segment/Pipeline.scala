@@ -14,7 +14,7 @@ import org.apache.flink.streaming.api.scala._
 
 object Pipeline {
   def getBackend(params: ParameterTool): StateBackend = {
-    val checkpointLocation = params.get("checkpoint-location", "")
+    val checkpointLocation = params.get("checkpoint-dir", "")
     new RocksDBStateBackend(checkpointLocation, true)
   }
 
