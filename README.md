@@ -16,7 +16,7 @@ Has no state.
 Filters out readings from sensors that have been disabled.
 
 #### State
-Stores broadcast state to know which sensors have been enabled or disabled and uses it as a whitelist
+Stores broadcast state to know which sensors have been enabled or disabled and uses it as an allowlist
 to pass messages down the pipeline.
 
 ### ReadingAverager
